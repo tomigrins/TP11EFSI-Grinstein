@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -18,36 +18,44 @@ export function Flag() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <Image
-        source={{ uri: currentCountry.flag }}
-        style={styles.flag}
-        contentFit="contain"
-        transition={200}
-      />
-    </ThemedView>
+    <View style={styles.wrapper}>
+      <ThemedView style={styles.container}>
+        <Image
+          source={{ uri: currentCountry.flag }}
+          style={styles.flag}
+          contentFit="contain"
+          transition={200}
+        />
+      </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    alignItems: 'center',
+    width: '100%',
+    gap: 8,
+  },
   container: {
     width: '100%',
+    maxWidth: 560,
+    aspectRatio: 1.8,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
     overflow: 'hidden',
-    padding: 12,
+    backgroundColor: '#cfd8e6',
+    borderRadius: 18,
   },
   flag: {
     width: '100%',
-    height: 220,
-    borderRadius: 18,
+    height: '100%',
     backgroundColor: '#dfe3ea',
   },
   placeholder: {
     width: '100%',
     minHeight: 220,
-    borderRadius: 20,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,

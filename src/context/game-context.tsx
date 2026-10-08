@@ -1,11 +1,11 @@
 import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-    type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
 } from 'react';
 
 export type Country = {
@@ -13,24 +13,19 @@ export type Country = {
   flag: string;
 };
 
-export type Player = {
-  id: number;
-  name: string;
-  score: number;
-};
-
 type GameContextType = {
   countries: Country[];
   currentCountry: Country | null;
   score: number;
-  players: Player[];
   timeLeft: number;
   hints: string[];
   isLoading: boolean;
   error: string | null;
   guessCountry: (guess: string) => void;
   nextCountry: () => void;
+  skipCountry: () => void;
   resetGame: () => void;
+  requestHint: () => void;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -50,9 +45,16 @@ const normalizeCountry = (entry: any): Country | null => {
     return null;
   }
 
+  const normalizedName = name.replace(/\s+/g, ' ').trim();
+  const normalizedFlag = flagUrl.trim();
+
+  if (!normalizedName || !normalizedFlag || normalizedFlag.length < 10) {
+    return null;
+  }
+
   return {
-    name,
-    flag: flagUrl,
+    name: normalizedName,
+    flag: normalizedFlag,
   };
 };
 
@@ -79,7 +81,6 @@ const buildHints = (countryName: string) => {
     `Empieza con la letra "${firstLetter}".`,
     `Tiene ${lettersCount} letras en su nombre.`,
     `Termina con la letra "${lastLetter}".`,
-    'Es un país disponible en la base de datos.',
   ];
 };
 
@@ -87,10 +88,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [currentCountry, setCurrentCountry] = useState<Country | null>(null);
   const [score, setScore] = useState(0);
-  const [players, setPlayers] = useState<Player[]>([
-    { id: 1, name: 'Jugador 1', score: 0 },
-    { id: 2, name: 'Jugador 2', score: 0 },
-  ]);
   const [timeLeft, setTimeLeft] = useState(20);
   const [hints, setHints] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,11 +95,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const applyScoreChange = useCallback((delta: number) => {
     setScore((prev) => prev + delta);
-    setPlayers((prevPlayers) =>
-      prevPlayers.map((player, index) =>
-        index === 0 ? { ...player, score: player.score + delta } : player
-      )
-    );
   }, []);
 
   const nextCountry = useCallback(() => {
@@ -116,26 +108,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     setCurrentCountry(chosenCountry);
-    setHints(buildHints(chosenCountry.name));
+    setHints([]);
     setTimeLeft(20);
   }, [countries, currentCountry]);
 
   const resetGame = useCallback(() => {
     setScore(0);
-    setPlayers((prevPlayers) =>
-      prevPlayers.map((player) => ({ ...player, score: 0 }))
-    );
     setTimeLeft(20);
     setError(null);
+    setHints([]);
 
     if (countries.length > 0) {
       const freshCountry = getRandomCountry(countries);
       setCurrentCountry(freshCountry);
-      if (freshCountry) {
-        setHints(buildHints(freshCountry.name));
-      }
     }
   }, [countries]);
+
+  const requestHint = useCallback(() => {
+    if (!currentCountry) {
+      return;
+    }
+
+    setHints((prevHints) => {
+      const hintPool = buildHints(currentCountry.name);
+      const nextHints = [...prevHints];
+
+      for (const hint of hintPool) {
+        if (!nextHints.includes(hint)) {
+          nextHints.push(hint);
+          break;
+        }
+      }
+
+      return nextHints;
+    });
+
+    applyScoreChange(-1);
+  }, [applyScoreChange, currentCountry]);
 
   useEffect(() => {
     let active = true;
@@ -148,9 +157,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const response = await fetch('https://countriesnow.space/api/v0.1/countries/flag/images');
         const payload = await response.json();
         const list = Array.isArray(payload?.data) ? payload.data : [];
-        const normalized = list
-          .map(normalizeCountry)
-          .filter((country): country is Country => country !== null);
+        const uniqueCountries = new Map<string, Country>();
+
+        for (const entry of list) {
+          const country = normalizeCountry(entry);
+
+          if (country && !uniqueCountries.has(country.name)) {
+            uniqueCountries.set(country.name, country);
+          }
+        }
+
+        const normalized = Array.from(uniqueCountries.values());
 
         if (!active) {
           return;
@@ -161,9 +178,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (normalized.length > 0) {
           const initialCountry = getRandomCountry(normalized);
           setCurrentCountry(initialCountry);
-          if (initialCountry) {
-            setHints(buildHints(initialCountry.name));
-          }
         }
       } catch (loadError) {
         if (!active) {
@@ -233,21 +247,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [applyScoreChange, currentCountry, nextCountry]
   );
 
+  const skipCountry = useCallback(() => {
+    applyScoreChange(-1);
+    nextCountry();
+  }, [applyScoreChange, nextCountry]);
+
   const value = useMemo<GameContextType>(
     () => ({
       countries,
       currentCountry,
       score,
-      players,
       timeLeft,
       hints,
       isLoading,
       error,
       guessCountry,
       nextCountry,
+      skipCountry,
       resetGame,
+      requestHint,
     }),
-    [countries, currentCountry, score, players, timeLeft, hints, isLoading, error, guessCountry, nextCountry, resetGame]
+    [countries, currentCountry, score, timeLeft, hints, isLoading, error, guessCountry, nextCountry, skipCountry, resetGame, requestHint]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

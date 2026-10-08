@@ -1,48 +1,48 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useGameContext } from '@/context/game-context';
 
 export function ScoreBoard() {
-  const { score, players } = useGameContext();
+  const { score } = useGameContext();
 
   return (
-    <ThemedView type="backgroundElement" style={styles.container}>
-      <View style={styles.scoreGroup}>
-        <ThemedText type="small">Puntaje</ThemedText>
-        <ThemedText type="subtitle">{score}</ThemedText>
-      </View>
+    <ThemedView style={styles.container}>
+      <ThemedText type="smallBold" style={styles.label}>
+        PUNTOS
+      </ThemedText>
 
-      <View style={styles.playerGroup}>
-        {players.map((player) => (
-          <View key={player.id} style={styles.playerRow}>
-            <ThemedText type="small">{player.name}</ThemedText>
-            <ThemedText type="smallBold">{player.score}</ThemedText>
-          </View>
-        ))}
-      </View>
+      <ThemedText type="subtitle" style={styles.scoreText}>
+        {score}
+      </ThemedText>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    borderRadius: 20,
-    padding: 16,
-    gap: 12,
-  },
-  scoreGroup: {
+    flex: 1,
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    minHeight: 96,
+    borderRadius: 16,
+    backgroundColor: '#1a2433',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#314863',
   },
-  playerGroup: {
-    gap: 8,
+  label: {
+    color: '#b9d9ff',
+    fontSize: 11,
+    letterSpacing: 1.6,
+    marginBottom: 4,
+    textTransform: 'uppercase',
   },
-  playerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  scoreText: {
+    color: '#ffffff',
+    fontSize: 30,
+    lineHeight: 30,
   },
 });
