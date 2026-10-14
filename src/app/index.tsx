@@ -9,14 +9,14 @@ import { ScoreBoard } from '@/components/game/score-board';
 import { Timer } from '@/components/game/timer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useGameContext } from '@/context/game-context';
+import { usarJuego } from '@/context/game-context';
 
 export default function HomeScreen() {
-  const { error, resetGame, isLoading, playerName, setPlayerName, canPlay } = useGameContext();
+  const { error, reiniciarJuego, isLoading, nombreJugador, ponerNombre, puedeJugar } = usarJuego();
   const [draftName, setDraftName] = useState(playerName);
 
   useEffect(() => {
-    setDraftName(playerName);
+    setDraftName(nombreJugador);
   }, [playerName]);
 
   const handleSaveName = () => {
@@ -26,14 +26,14 @@ export default function HomeScreen() {
       return;
     }
 
-    setPlayerName(trimmed);
+    ponerNombre(trimmed);
     Keyboard.dismiss();
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {!canPlay ? (
+        {!puedeJugar ? (
           <ThemedView type="backgroundElement" style={styles.nameCard}>
             <ThemedText type="title" style={styles.nameTitle}>
               ¿Cómo te llamás?
@@ -72,7 +72,7 @@ export default function HomeScreen() {
           </Pressable>
         )}
 
-        {canPlay ? <Leaderboard /> : null}
+        {puedeJugar ? <Leaderboard /> : null}
 
         {error ? (
           <ThemedView type="backgroundElement" style={styles.errorBox}>
@@ -80,8 +80,8 @@ export default function HomeScreen() {
           </ThemedView>
         ) : null}
 
-        {canPlay ? (
-          <Pressable onPress={resetGame} style={styles.resetButton}>
+        {puedeJugar ? (
+          <Pressable onPress={reiniciarJuego} style={styles.resetButton}>
             <ThemedText type="smallBold">Reiniciar turno</ThemedText>
           </Pressable>
         ) : null}

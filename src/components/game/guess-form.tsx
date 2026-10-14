@@ -3,10 +3,10 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useGameContext } from '@/context/game-context';
+import { usarJuego } from '@/context/game-context';
 
 export function GuessForm() {
-  const { guessCountry, hints, requestHint, skipCountry } = useGameContext();
+  const { adivinarPais, pistas, pedirPista, saltarPais } = usarJuego();
   const [guess, setGuess] = useState('');
 
   const handleSubmit = () => {
@@ -14,12 +14,12 @@ export function GuessForm() {
       return;
     }
 
-    guessCountry(guess);
+    adivinarPais(guess);
     setGuess('');
   };
 
   const handleSkip = () => {
-    skipCountry();
+    saltarPais();
   };
 
   return (
@@ -37,12 +37,12 @@ export function GuessForm() {
 
       <View style={styles.hintsRow}>
         <View style={styles.hintsBox}>
-          {hints.length === 0 ? (
+          {pistas.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
               Sin pistas aún.
             </ThemedText>
           ) : (
-            hints.map((hint) => (
+            pistas.map((hint) => (
               <ThemedText key={hint} type="small" themeColor="textSecondary" style={styles.hintItem}>
                 • {hint}
               </ThemedText>
@@ -50,7 +50,7 @@ export function GuessForm() {
           )}
         </View>
 
-        <Pressable onPress={requestHint} style={styles.hintButton}>
+        <Pressable onPress={pedirPista} style={styles.hintButton}>
           <ThemedText type="smallBold" themeColor="text">
             Pista
           </ThemedText>

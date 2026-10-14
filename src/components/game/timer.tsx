@@ -2,10 +2,10 @@ import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useGameContext } from '@/context/game-context';
+import { usarJuego } from '@/context/game-context';
 
 export function Timer() {
-  const { timeLeft } = useGameContext();
+  const { tiempo } = usarJuego();
 
   return (
     <ThemedView style={styles.container}>
@@ -13,7 +13,7 @@ export function Timer() {
         TIEMPO
       </ThemedText>
       <ThemedText type="subtitle" style={styles.timeText}>
-        {timeLeft}s
+        {tiempo}s
       </ThemedText>
     </ThemedView>
   );

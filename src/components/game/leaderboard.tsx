@@ -2,10 +2,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useGameContext } from '@/context/game-context';
+import { usarJuego } from '@/context/game-context';
 
 export function Leaderboard() {
-  const { leaderboard } = useGameContext();
+  const { top } = usarJuego();
 
   return (
     <ThemedView type="backgroundElement" style={styles.container}>
@@ -13,13 +13,13 @@ export function Leaderboard() {
         Leaderboard
       </ThemedText>
 
-      {leaderboard.length === 0 ? (
+      {top.length === 0 ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.emptyState}>
           Todavía no hay puntajes.
         </ThemedText>
       ) : (
         <View style={styles.list}>
-          {leaderboard.map((entry, index) => (
+          {top.map((entry, index) => (
             <View key={`${entry.name}-${entry.playedAt}-${index}`} style={styles.row}>
               <ThemedText type="smallBold" style={styles.rank}>
                 #{index + 1}

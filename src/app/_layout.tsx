@@ -3,7 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { GameProvider } from '@/context/game-context';
+import { ProveedorJuego } from '@/context/game-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -12,10 +12,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <GameProvider>
+      <ProveedorJuego>
         <AnimatedSplashOverlay />
         <Stack screenOptions={{ headerShown: false }} />
-      </GameProvider>
+      </ProveedorJuego>
     </ThemeProvider>
   );
 }
