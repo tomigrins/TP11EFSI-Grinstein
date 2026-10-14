@@ -1,57 +1,9 @@
-# Welcome to your Expo app 👋
+1° uso de IA: Necesito que te pongas en el rol de un programador senior de frontend especializado en React Native y Expo. Hace una app que muestre una bandera aleatoria y que pida que adivine el nombre del país. Necesito que el juego tenga temporizador, puntaje, pistas por país y botón de skip. Además, si el usuario responde mal, se le resta un punto. Si lo dice bien, sumar 10. Hacelo con un diseño atractivo y usa los siguientes componentes: <GameProvider>, <Flag />, <GuessForm />, <ScoreBoard />, <Timer /> y <Leaderboard />
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+2° uso de IA: Con el mismo rol, necesito que uses esta API https://countriesnow.space/api/v0.1/countries/flag/images (documentacion: https://documenter.getpostman.com/view/1134062/T1LJjU52#5de05268-5370-48c5-a812-93b4959fd91c) para usar las banderas.
 
-## Get started
+3° uso de IA: Necesito que te pongas en el rol de un programador senior de frontend y me hagas una pantalla de inicio donde antes de empezar a jugar el usuario tenga que ingresar su nombre. Cuando el usuario toca reiniciar, tiene que registrarse su puntaje en un leaderboard con el nombre + puntuación. En leaderboard solo necesito el top 3.
 
-1. Install dependencies
+4° uso de IA: Necesito que actúes como el mejor programador frontend y me construyas la UI completa de la app con estilo moderno y gamer. hacela en tonos oscuros, con paneles redondeados, botones de acción con colores contrastantes, un tablero de puntaje y un contador de tiempo. Quiero que el diseño se vea premium, con buena legibilidad y que funcione bien en dispositivos móviles. Incluye leaderboard, pantalla de carga y un bloque para la bandera.
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-"# TP11EFSI-Grinstein" 
+Raramente cuando ejecutas el proyecto por el QR las banderas se distorcionan. Esto no pasa en web. Ya intente de solucionarlo y no pude. No se si es por la implementacion de la API o que.

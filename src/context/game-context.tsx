@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
   useCallback,
@@ -13,6 +14,12 @@ export type Country = {
   flag: string;
 };
 
+export type LeaderboardEntry = {
+  name: string;
+  score: number;
+  playedAt: string;
+};
+
 type GameContextType = {
   countries: Country[];
   currentCountry: Country | null;
@@ -21,12 +28,21 @@ type GameContextType = {
   hints: string[];
   isLoading: boolean;
   error: string | null;
+  playerName: string;
+  leaderboard: LeaderboardEntry[];
+  canPlay: boolean;
+  setPlayerName: (name: string) => void;
+  clearPlayerName: () => void;
   guessCountry: (guess: string) => void;
   nextCountry: () => void;
   skipCountry: () => void;
   resetGame: () => void;
   requestHint: () => void;
 };
+
+const STORAGE_KEY = 'guess-the-flag-leaderboard';
+const PLAYER_NAME_KEY = 'guess-the-flag-player-name';
+const MAX_LEADERBOARD_ITEMS = 3;
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -36,6 +52,17 @@ const normalizeText = (value: string) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
+
+const normalizePlayerName = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+const sortLeaderboard = (entries: LeaderboardEntry[]) =>
+  [...entries].sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score;
+    }
+
+    return left.name.localeCompare(right.name, 'es', { sensitivity: 'base' });
+  });
 
 const normalizeCountry = (entry: any): Country | null => {
   const name = typeof entry?.name === 'string' ? entry.name.trim() : undefined;
@@ -84,6 +111,33 @@ const buildHints = (countryName: string) => {
   ];
 };
 
+const readStoredLeaderboard = async (): Promise<LeaderboardEntry[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const validEntries = parsed.filter(
+      (entry): entry is LeaderboardEntry =>
+        typeof entry?.name === 'string' &&
+        typeof entry?.score === 'number' &&
+        typeof entry?.playedAt === 'string'
+    );
+
+    return sortLeaderboard(validEntries).slice(0, MAX_LEADERBOARD_ITEMS);
+  } catch {
+    return [];
+  }
+};
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [currentCountry, setCurrentCountry] = useState<Country | null>(null);
@@ -92,6 +146,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [hints, setHints] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [playerName, setPlayerNameState] = useState('');
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  const canPlay = playerName.trim().length > 0;
+
+  const setPlayerName = useCallback((name: string) => {
+    const nextName = normalizePlayerName(name);
+    setPlayerNameState(nextName);
+
+    if (nextName) {
+      AsyncStorage.setItem(PLAYER_NAME_KEY, nextName).catch(() => undefined);
+    }
+  }, []);
+
+  const clearPlayerName = useCallback(() => {
+    setPlayerNameState('');
+    AsyncStorage.removeItem(PLAYER_NAME_KEY).catch(() => undefined);
+  }, []);
+
+  const persistLeaderboard = useCallback((entries: LeaderboardEntry[]) => {
+    const nextEntries = sortLeaderboard(entries).slice(0, MAX_LEADERBOARD_ITEMS);
+    setLeaderboard(nextEntries);
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextEntries)).catch(() => undefined);
+  }, []);
 
   const applyScoreChange = useCallback((delta: number) => {
     setScore((prev) => prev + delta);
@@ -113,16 +191,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [countries, currentCountry]);
 
   const resetGame = useCallback(() => {
+    const trimmedName = normalizePlayerName(playerName);
+    const finalScore = Math.max(score, 0);
+
+    if (trimmedName) {
+      const entry: LeaderboardEntry = {
+        name: trimmedName,
+        score: finalScore,
+        playedAt: new Date().toISOString(),
+      };
+
+      persistLeaderboard([...leaderboard, entry]);
+    }
+
     setScore(0);
     setTimeLeft(20);
     setError(null);
     setHints([]);
+    clearPlayerName();
 
     if (countries.length > 0) {
       const freshCountry = getRandomCountry(countries);
       setCurrentCountry(freshCountry);
     }
-  }, [countries]);
+  }, [clearPlayerName, countries, leaderboard, persistLeaderboard, playerName, score]);
 
   const requestHint = useCallback(() => {
     if (!currentCountry) {
@@ -193,7 +285,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    loadCountries();
+    const hydrateSession = async () => {
+      const savedName = await AsyncStorage.getItem(PLAYER_NAME_KEY);
+      const savedLeaderboard = await readStoredLeaderboard();
+
+      if (!active) {
+        return;
+      }
+
+      const nextName = normalizePlayerName(savedName ?? '');
+      setPlayerNameState(nextName);
+      setLeaderboard(savedLeaderboard);
+    };
+
+    void loadCountries();
+    void hydrateSession();
 
     return () => {
       active = false;
@@ -201,7 +307,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!currentCountry) {
+    if (!currentCountry || !canPlay) {
       return;
     }
 
@@ -222,7 +328,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [applyScoreChange, currentCountry, nextCountry]);
+  }, [applyScoreChange, canPlay, currentCountry, nextCountry]);
 
   const guessCountry = useCallback(
     (guess: string) => {
@@ -261,13 +367,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hints,
       isLoading,
       error,
+      playerName,
+      leaderboard,
+      canPlay,
+      setPlayerName,
+      clearPlayerName,
       guessCountry,
       nextCountry,
       skipCountry,
       resetGame,
       requestHint,
     }),
-    [countries, currentCountry, score, timeLeft, hints, isLoading, error, guessCountry, nextCountry, skipCountry, resetGame, requestHint]
+    [countries, currentCountry, score, timeLeft, hints, isLoading, error, playerName, leaderboard, canPlay, setPlayerName, clearPlayerName, guessCountry, nextCountry, skipCountry, resetGame, requestHint]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
