@@ -3,12 +3,12 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { usarJuego } from '@/context/game-context';
+import { useGameContext } from '@/context/game-context';
 
 export function Flag() {
-  const { paisActual, isLoading } = usarJuego();
+  const { currentCountry, isLoading } = useGameContext();
 
-  if (isLoading || !paisActual) {
+  if (isLoading || !currentCountry) {
     return (
       <ThemedView style={styles.placeholder}>
         <ActivityIndicator size="large" />
@@ -21,7 +21,7 @@ export function Flag() {
     <View style={styles.wrapper}>
       <ThemedView style={styles.container}>
         <Image
-          source={{ uri: paisActual.flag }}
+          source={{ uri: currentCountry.flag }}
           style={styles.flag}
           contentFit="contain"
           transition={200}

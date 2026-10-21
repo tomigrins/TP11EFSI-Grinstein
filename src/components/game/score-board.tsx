@@ -2,10 +2,10 @@ import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { usarJuego } from '@/context/game-context';
+import { useGameContext } from '@/context/game-context';
 
 export function ScoreBoard() {
-  const { puntos } = usarJuego();
+  const { score } = useGameContext();
 
   return (
     <ThemedView style={styles.container}>
@@ -14,7 +14,7 @@ export function ScoreBoard() {
       </ThemedText>
 
       <ThemedText type="subtitle" style={styles.scoreText}>
-        {puntos}
+        {score}
       </ThemedText>
     </ThemedView>
   );

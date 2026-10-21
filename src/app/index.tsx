@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,56 +9,74 @@ import { ScoreBoard } from '@/components/game/score-board';
 import { Timer } from '@/components/game/timer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { usarJuego } from '@/context/game-context';
+import { useGameContext } from '@/context/game-context';
 
 export default function HomeScreen() {
-  const { error, reiniciarJuego, isLoading, nombreJugador, ponerNombre, puedeJugar } = usarJuego();
-  const [draftName, setDraftName] = useState(playerName);
+  const { error, resetGame, isLoading, playerName, setPlayerName } = useGameContext();
+  const [localName, setLocalName] = useState(playerName);
+  const isPlaying = Boolean(playerName);
 
-  useEffect(() => {
-    setDraftName(nombreJugador);
-  }, [playerName]);
-
-  const handleSaveName = () => {
-    const trimmed = draftName.trim();
-
-    if (!trimmed) {
+  const handleNameSubmit = () => {
+    const sanitizedName = localName.trim();
+    if (!sanitizedName) {
+      setPlayerName('');
       return;
     }
 
-    ponerNombre(trimmed);
-    Keyboard.dismiss();
+    setPlayerName(sanitizedName);
+  };
+
+  const handleReset = () => {
+    resetGame();
+    setLocalName('');
+    setPlayerName('');
   };
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {!puedeJugar ? (
-          <ThemedView type="backgroundElement" style={styles.nameCard}>
-            <ThemedText type="title" style={styles.nameTitle}>
-              ¿Cómo te llamás?
-            </ThemedText>
-
-            <TextInput
-              value={draftName}
-              onChangeText={setDraftName}
-              placeholder="Tu nombre"
-              placeholderTextColor="#d8e7ff"
-              autoCapitalize="words"
-              autoCorrect={false}
-              style={styles.nameInput}
-              onSubmitEditing={handleSaveName}
-              returnKeyType="done"
-            />
-
-            <Pressable onPress={handleSaveName} style={styles.primaryButton}>
-              <ThemedText type="smallBold" themeColor="text">
-                Empezar a jugar
+        {!isPlaying ? (
+          <>
+            <ThemedView type="backgroundElement" style={styles.playerBox}>
+              <ThemedText type="smallBold" style={styles.label}>
+                Jugador
               </ThemedText>
-            </Pressable>
-          </ThemedView>
+
+              <TextInput
+                value={localName}
+                onChangeText={(value) => {
+                  setLocalName(value);
+                  if (!value.trim()) {
+                    setPlayerName('');
+                  }
+                }}
+                onSubmitEditing={handleNameSubmit}
+                placeholder="Ingresá tu nombre"
+                placeholderTextColor="#d8e7ff"
+                autoCapitalize="words"
+                autoCorrect={false}
+                style={styles.nameInput}
+              />
+
+              <Pressable onPress={handleNameSubmit} style={styles.nameButton}>
+                <ThemedText type="smallBold">Ingresar y jugar</ThemedText>
+              </Pressable>
+            </ThemedView>
+
+            <Leaderboard />
+          </>
         ) : (
           <Pressable style={styles.touchArea} onPress={Keyboard.dismiss}>
+            <ThemedView type="backgroundElement" style={styles.playerBox}>
+              <ThemedText type="smallBold" style={styles.label}>
+                Jugador
+              </ThemedText>
+
+              <ThemedText type="small" themeColor="textSecondary" style={styles.playerNameText}>
+                Jugando como: {playerName}
+              </ThemedText>
+            </ThemedView>
+
             <ThemedView type="backgroundElement" style={styles.gamePanel}>
               <View style={styles.topRow}>
                 <ScoreBoard />
@@ -72,17 +90,15 @@ export default function HomeScreen() {
           </Pressable>
         )}
 
-        {puedeJugar ? <Leaderboard /> : null}
-
         {error ? (
           <ThemedView type="backgroundElement" style={styles.errorBox}>
             <ThemedText type="smallBold">{error}</ThemedText>
           </ThemedView>
         ) : null}
 
-        {puedeJugar ? (
-          <Pressable onPress={reiniciarJuego} style={styles.resetButton}>
-            <ThemedText type="smallBold">Reiniciar turno</ThemedText>
+        {isPlaying ? (
+          <Pressable onPress={handleReset} style={styles.resetButton}>
+            <ThemedText type="smallBold">Reiniciar</ThemedText>
           </Pressable>
         ) : null}
       </SafeAreaView>
@@ -105,43 +121,43 @@ const styles = StyleSheet.create({
   },
   touchArea: {
     width: '100%',
+    gap: 10,
   },
-  nameCard: {
+  playerBox: {
     width: '100%',
-    borderRadius: 22,
-    padding: 18,
+    borderRadius: 18,
+    padding: 12,
     backgroundColor: '#253548',
-    gap: 14,
-    shadowColor: '#020b14',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#4b6d93',
+    gap: 8,
   },
-  nameTitle: {
-    color: '#ffffff',
-    fontSize: 28,
-    lineHeight: 36,
-    textAlign: 'center',
+  label: {
+    color: '#b9d9ff',
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
   },
   nameInput: {
     width: '100%',
-    minHeight: 52,
-    borderRadius: 12,
+    minHeight: 46,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#4ca1ff',
     backgroundColor: '#0d1d2b',
     color: '#eaf4ff',
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontSize: 16,
+    paddingHorizontal: 12,
   },
-  primaryButton: {
-    alignSelf: 'center',
-    backgroundColor: '#2b6fe8',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 12,
+  nameButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f7d35b',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  playerNameText: {
+    color: '#dfeafc',
   },
   gamePanel: {
     width: '100%',
